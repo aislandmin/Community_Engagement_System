@@ -38,7 +38,7 @@ function UserComponent() {
     const [register] = useMutation(REGISTER_MUTATION, {
         onCompleted: () => {
             alert("Registration successful! Please log in.");
-            setActiveTab('login'); 
+            setActiveTab('login');
         },
         onError: (error) => setAuthError(error.message || 'Registration failed'),
     });
@@ -63,14 +63,16 @@ function UserComponent() {
                 return;
             }
             const interestsArray = interests.split(',').map(i => i.trim()).filter(i => i !== '');
-            await register({ variables: { 
-                username, 
-                email, 
-                password, 
-                role, 
-                interests: interestsArray, 
-                location 
-            } });
+            await register({
+                variables: {
+                    username,
+                    email,
+                    password,
+                    role,
+                    interests: interestsArray,
+                    location
+                }
+            });
         }
         setIsSubmitting(false);
     };
@@ -82,7 +84,7 @@ function UserComponent() {
                     <h2 className="fw-bold text-primary">Community Hub</h2>
                     <p className="text-muted">Connect, Engage, and Grow together.</p>
                 </div>
-                
+
                 <div className="card shadow border-0 overflow-hidden" style={{ borderRadius: '16px' }}>
                     <Nav variant="tabs" className="nav-justified bg-light" activeKey={activeTab} onSelect={(k) => setActiveTab(k)}>
                         <Nav.Item>
@@ -178,7 +180,7 @@ function UserComponent() {
                         </Form>
                     </div>
                 </div>
-                
+
                 <p className="text-center mt-4 text-muted small">
                     &copy; {new Date().getFullYear()} Community Engagement System.
                 </p>

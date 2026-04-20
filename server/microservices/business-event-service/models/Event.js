@@ -8,6 +8,8 @@ const eventSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   location: { type: String, required: true },
   rsvps: [{ type: mongoose.Schema.Types.ObjectId }],
+  invitedVolunteers: [{ type: mongoose.Schema.Types.ObjectId }],
+  volunteers: [{ type: mongoose.Schema.Types.ObjectId }],
   volunteersNeeded: { type: Number, default: 0 },
   volunteerInterests: [{ type: String }],
   timingInsight: { type: String }, // AI predicted best time

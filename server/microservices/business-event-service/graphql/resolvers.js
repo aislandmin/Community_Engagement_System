@@ -20,6 +20,8 @@ const resolvers = {
   Event: {
     organizer: (evt) => ({ id: evt.organizerId }),
     rsvps: (evt) => evt.rsvps.map(id => ({ id })),
+    invitedVolunteers: (evt) => evt.invitedVolunteers.map(id => ({ id })),
+    volunteers: (evt) => evt.volunteers.map(id => ({ id })),
   },
   Query: {
     businesses: async (_, { category }) => {
@@ -97,7 +99,17 @@ const resolvers = {
         businessFeedback,
         dealId: args.dealId
       });
-      return await newReview.save();
+      const savedReview = await newReview.save();
+
+      // Emit real-time notification via Socket.io
+      if (context.io) {
+        context.io.emit('new-review', {
+          businessId: args.businessId,
+          reviewerName: context.user.username
+        });
+      }
+
+      return savedReview;
     },
     respondToReview: async (_, { reviewId, response }, context) => {
       if (!context.user) throw new Error('Unauthorized');
@@ -151,6 +163,43 @@ const resolvers = {
         return await event.save();
       }
       return event;
+    },
+    inviteVolunteerToEvent: async (_, { eventId, volunteerId }, context) => {
+        if (!context.user) throw new Error('Unauthorized');
+        const event = await Event.findById(eventId);
+        if (!event) throw new Error('Event not found');
+        if (event.organizerId.toString() !== context.user.id) throw new Error('Forbidden');
+
+        if (!event.invitedVolunteers.includes(volunteerId)) {
+            event.invitedVolunteers.push(volunteerId);
+            await event.save();
+
+            // Send Real-time Invitation via Socket.io
+            if (context.io) {
+                context.io.emit('new-volunteer-invitation', {
+                    eventId,
+                    volunteerId,
+                    requesterName: context.user.username,
+                    description: `You've been invited to help with: ${event.title}`
+                });
+            }
+        }
+        return event;
+    },
+    volunteerForEvent: async (_, { eventId }, context) => {
+        if (!context.user) throw new Error('Unauthorized');
+        const event = await Event.findById(eventId);
+        if (!event) throw new Error('Event not found');
+        
+        if (!event.volunteers.includes(context.user.id)) {
+            event.volunteers.push(context.user.id);
+            // Also RSVP them if they haven't already
+            if (!event.rsvps.includes(context.user.id)) {
+                event.rsvps.push(context.user.id);
+            }
+            return await event.save();
+        }
+        return event;
     },
   },
 };

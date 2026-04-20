@@ -134,29 +134,32 @@ const resolvers = {
         request.updatedAt = new Date();
         return await request.save();
     },
-    inviteVolunteer: async (_, { helpRequestId, volunteerId }, context) => {
+    inviteVolunteer: async (_, { helpRequestId, eventId, volunteerId }, context) => {
         if (!context.user) throw new Error('Unauthorized');
-        const request = await HelpRequest.findById(helpRequestId);
-        if (!request) throw new Error('Help request not found');
-        
-        if (!request.invitedVolunteers.includes(volunteerId)) {
-            request.invitedVolunteers.push(volunteerId);
-            const savedRequest = await request.save();
-            
-            // Send Real-time Invitation via Socket.io
-            if (context.io) {
-                context.io.emit('new-volunteer-invitation', {
-                    requestId: helpRequestId,
-                    volunteerId,
-                    requesterName: context.user.username,
-                    description: request.description
-                });
-            }
-            return savedRequest;
+
+        let request = null;
+        if (helpRequestId) {
+           request = await HelpRequest.findById(helpRequestId);
+           if (!request) throw new Error('Help request not found');
+
+           if (!request.invitedVolunteers.includes(volunteerId)) {
+               request.invitedVolunteers.push(volunteerId);
+               await request.save();
+           }
         }
-        return request;
-    },
-    createAlert: async (_, args, context) => {
+
+        // Send Real-time Invitation via Socket.io (Works for both Help Requests and Events)
+        if (context.io) {
+            context.io.emit('new-volunteer-invitation', {
+                requestId: helpRequestId || null,
+                eventId: eventId || null,
+                volunteerId,
+                requesterName: context.user.username,
+                description: request ? request.description : "You've been invited to help with a community event!"
+            });
+        }
+        return request || { id: eventId }; // Return something valid for federation
+    },    createAlert: async (_, args, context) => {
         if (!context.user) throw new Error('Unauthorized');
         const newAlert = new Alert({
             ...args,

@@ -3,17 +3,26 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import dotenv from 'dotenv';
 dotenv.config();
 
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+const geminiKey = process.env.GEMINI_API_KEY;
 
-if (!apiKey) {
-  console.error("❌ ERROR: GEMINI_API_KEY or GOOGLE_API_KEY is not defined in the environment variables.");
+if (!geminiKey) {
+  console.error("ERROR: GEMINI_API_KEY or GOOGLE_API_KEY is not defined in the environment variables.");
 }
 
 const model = new ChatGoogleGenerativeAI({
-  model: "gemini-1.5-flash",
-  maxOutputTokens: 2048,
-  apiKey: apiKey,
+  // model: "gemini-1.0-pro",
+  // maxOutputTokens: 2048,
+  // apiKey: apiKey,
+  apiKey: geminiKey,
+  model: "gemini-flash-latest",//"gemini-1.5-flash",
+  temperature: 0.7,
 });
+
+// chatModel = new ChatGoogleGenerativeAI({
+//   apiKey: geminiKey,
+//   model: "gemini-flash-latest",//"gemini-1.5-flash",
+//   temperature: 0.7,
+// });
 
 export const summarizeText = async (text) => {
   const prompt = PromptTemplate.fromTemplate(
@@ -67,143 +76,152 @@ export const predictTiming = async (description) => {
   return response.content;
 };
 
-// export const suggestVolunteers = async (users, requirements) => {
-//   console.log("AI Matching Request:", requirements);
-//   console.log(`Analyzing ${users.length} potential volunteers...`);
-//   console.log(`${users}`);
-
-//   const prompt = PromptTemplate.fromTemplate(
-//     "Return ONLY a JSON array. No preamble, no explanation.\n\n" +
-//     "You are a community assistant. Match this request to the top 3 best volunteers from the list provided.\n\n" +
-//     "MATCHING RULES:\n" +
-//     "1. SAME LOCATION PRIORITY: If a member's location is IDENTICAL or very similar to the request location, they are a 0.95+ match. Proximity is the most important factor.\n" +
-//     "2. INTEREST MATCH: Match keywords in the description to user interests.\n\n" +
-//     "Return as: [ { \"username\": \"...\", \"matchScore\": 0.95, \"reason\": \"...\" } ]\n\n" +
-//     "Request: {requirements}\n\nNeighbors: {members}"
-//   );
-//   const chain = prompt.pipe(model);
-
-//   const membersData = users.map(u => `Username: ${u.username}, Interests: ${u.interests.join(', ')}, Location: ${u.location}`).join('\n');
-
-//   const response = await chain.invoke({
-//     requirements,
-//     members: membersData
-//   });
-
-//   try {
-//     const cleanedContent = response.content.replace(/```json|```/g, '').trim();
-//     const jsonResponse = JSON.parse(cleanedContent);
-//     console.log("✅ AI Suggestions Found:", jsonResponse.length);
-//     return jsonResponse;
-//   } catch (error) {
-//     console.error("❌ AI Parsing Error. Raw Content:", response.content);
-//     return [];
-//   }
-// };
-
 export const suggestVolunteers = async (users, requirements) => {
-  console.log(users);
-  console.log(requirements);
-  // const normalize = (str = '') => str.trim().toLowerCase();
-
-  // const extractTaskInfo = (text) => {
-  //   // Clean up template literal whitespace
-  //   const cleanText = text.replace(/^\s+/gm, '');
-
-  //   // Improved regex to capture content between labels, or until end of string
-  //   const descriptionMatch = cleanText.match(/TASK DESCRIPTION:\s*([\s\S]*?)(?=TASK LOCATION:|$)/i);
-  //   const locationMatch = cleanText.match(/TASK LOCATION:\s*([\s\S]*?)$/i);
-
-  //   return {
-  //     description: descriptionMatch ? descriptionMatch[1].trim() : cleanText.trim(),
-  //     location: locationMatch ? locationMatch[1].trim() : 'General'
-  //   };
-  // };
-
-  // const { description, location } = extractTaskInfo(requirements);
-
   const extractTaskInfo = (text) => {
-    const cleanText = text.replace(/^\s+/gm, '');
-
-    const descriptionMatch = cleanText.match(/TASK DESCRIPTION:\s*([\s\S]*?)(?=TASK LOCATION:|$)/i);
-    const locationMatch = cleanText.match(/TASK LOCATION:\s*([\s\S]*?)$/i);
-    const categoryMatch = cleanText.match(/Category:\s*([^.]+)\.?/i);
+    const locationPart = text.split('TASK LOCATION:')[1] || '';
+    const beforeLocation = text.split('TASK LOCATION:')[0] || '';
+    const categoryMatch = beforeLocation.match(/Category:\s*([^.]+)/i);
+    const titleMatch = beforeLocation.match(/titled\s+"([^"]+)"/i);
+    const descriptionMatch = beforeLocation.match(/Description:\s*(.+)$/i);
 
     return {
-      description: descriptionMatch ? descriptionMatch[1].trim() : cleanText.trim(),
-      location: locationMatch ? locationMatch[1].trim() : 'General',
-      category: categoryMatch ? categoryMatch[1].trim() : ''
+      title: titleMatch ? titleMatch[1].trim() : 'Community Event',
+      category: categoryMatch ? categoryMatch[1].trim() : 'General',
+      description: descriptionMatch ? descriptionMatch[1].trim() : beforeLocation.trim(),
+      location: locationPart.trim() || 'General Neighborhood'
     };
   };
 
-  const { description, location, category } = extractTaskInfo(requirements);
+  const { title, description, location, category } = extractTaskInfo(requirements);
 
-  console.log("AI Matching Request for Event/Task:", description);
-  console.log("Analyzed Location:", location);
+  const normalize = (value) => (value || '').toString().trim().toLowerCase();
 
-  //   const prompt = PromptTemplate.fromTemplate(
-  //     `Return ONLY a JSON array. No preamble, no explanation.
+  const categoryKeywordsMap = {
+    meetings: ['meeting', 'discussion', 'community', 'projects', 'safety', 'security', 'planning'],
+    social: ['social', 'community', 'fun', 'friends', 'networking'],
+    cleanup: ['cleanup', 'clean-up', 'environment', 'outdoors', 'community'],
+    gardening: ['gardening', 'plants', 'outdoors', 'greenery'],
+    pets: ['pets', 'dogs', 'animals'],
+    technology: ['tech', 'technology', 'computers', 'digital'],
+    sports: ['sports', 'fitness', 'exercise', 'wellness'],
+    food: ['food', 'cooking', 'meals']
+  };
 
-  // You are a community assistant. Match this request to the best volunteers from the list provided.
+  const normalizedCategory = normalize(category);
 
-  // CRITICAL RULES:
-  // 1. USE EXACT USERNAMES: You must return the EXACT username string as it appears in the "Neighbors" list below. Do not change case or spelling.
-  // 2. INTEREST ALIGNMENT: Prioritize members whose interests (e.g., social, gardening, tech) match the nature of the request description: "{description}".
-  // 3. KEYWORD MATCH: If the category is "Social" or "Help", you MUST look for related keywords in the interests list.
-  // 4. LOCATION: Favor members in the same or nearby locations.
+  const eventKeywords = new Set([
+    ...(categoryKeywordsMap[normalizedCategory] || []).map(normalize),
+    ...normalize(title).split(/\W+/).filter((w) => w.length > 2),
+    ...normalize(description).split(/\W+/).filter((w) => w.length > 2)
+  ]);
 
-  // Return format:
-  // [
-  //   { "username": "EXACT_NAME_FROM_LIST", "matchScore": 0.95, "reason": "Reasoning based on interest and location..." }
-  // ]
+  const scoredUsers = users.map((u) => {
+    const username = u.username;
+    const userLocation = normalize(u.location);
+    const taskLocation = normalize(location);
+    const interests = (u.interests || []).map(normalize);
 
-  // Request description: {description}
-  // Request location: {location}
+    let score = 0;
+    const reasons = [];
 
-  // Neighbors to choose from:
-  // {members}`
-  //   );
+    const sameLocation = userLocation && taskLocation && userLocation === taskLocation;
 
-  const prompt = PromptTemplate.fromTemplate(`
-Return ONLY a JSON array. No preamble, no explanation.
+    if (sameLocation) {
+      score += 0.6;
+      reasons.push(`same location (${location})`);
+    }
 
-You are a community assistant. Match this request to the best volunteers from the list provided.
+    const matchedInterests = [...new Set(
+      interests.filter((interest) => eventKeywords.has(interest))
+    )];
 
-CRITICAL RULES:
-1. USE EXACT USERNAMES: You must return the EXACT username string as it appears in the "Neighbors" list below.
-2. CATEGORY MATCH: Strongly prioritize members whose interests contain the exact normalized category.
-3. LOCATION MATCH: Strongly prioritize members in the exact same location.
-4. INTEREST ALIGNMENT: Also consider whether other interests fit the description.
+    if (matchedInterests.length > 0) {
+      score += Math.min(matchedInterests.length * 0.2, 0.4);
+      reasons.push(`relevant interests: ${matchedInterests.join(', ')}`);
+    }
 
-Request category: {category}
-Request description: {description}
-Request location: {location}
+    const result = {
+      username,
+      matchScore: Number(Math.min(score, 0.99).toFixed(2)),
+      reason: reasons.join('; '),
+      sameLocation,
+      matchedInterests
+    };
 
-Neighbors to choose from:
-{members}
-`);
-
-  const chain = prompt.pipe(model);
-
-  const membersData = users
-    .map(
-      (u) =>
-        `Username: ${u.username}, Interests: ${(u.interests || []).join(', ')}, Location: ${u.location || 'Unknown'}`
-    )
-    .join('\n');
-
-  const response = await chain.invoke({
-    description,
-    location,
-    members: membersData
+    return result;
   });
 
-  try {
-    const cleanedContent = response.content.replace(/```json|```/g, '').trim();
-    const jsonResponse = JSON.parse(cleanedContent);
-    return jsonResponse;
-  } catch (error) {
-    console.error("❌ AI Parsing Error:", response.content);
+  const topMatches = scoredUsers
+    .filter((u) => u.matchScore > 0)
+    .sort((a, b) => b.matchScore - a.matchScore)
+    .slice(0, 5);
+
+  console.log('--- Hybrid Matching Debug ---');
+  console.log('Event Title:', title);
+  console.log('Category:', category);
+  console.log('Location:', location);
+  console.log('Keywords:', [...eventKeywords]);
+  console.log('Top Matches:', JSON.stringify(topMatches, null, 2));
+
+  if (topMatches.length === 0) {
     return [];
+  }
+
+  try {
+    const prompt = PromptTemplate.fromTemplate(`
+You are a helpful community assistant.
+
+Rewrite each reason into one short, natural sentence.
+Return ONLY a JSON array in this exact format:
+[
+  {{
+    "username": "alice",
+    "reason": "Alice is a strong match because ..."
+  }}
+]
+
+Event title: {title}
+Category: {category}
+Description: {description}
+Location: {location}
+
+Matches:
+{matches}
+`);
+
+    const chain = prompt.pipe(model);
+    const response = await chain.invoke({
+      title,
+      category,
+      description,
+      location,
+      matches: JSON.stringify(topMatches, null, 2)
+    });
+
+    const rawContent =
+      typeof response.content === 'string'
+        ? response.content
+        : JSON.stringify(response.content);
+
+    console.log('Raw AI response:', rawContent);
+
+    const cleanedContent = rawContent.replace(/```json|```/g, '').trim();
+    const aiReasons = JSON.parse(cleanedContent);
+
+    return topMatches.map((match) => {
+      const enhanced = aiReasons.find((m) => m.username === match.username);
+      return {
+        username: match.username,
+        matchScore: match.matchScore,
+        reason: enhanced?.reason || match.reason
+      };
+    });
+  } catch (error) {
+    console.error('AI reason enhancement failed:', error);
+    return topMatches.map(({ username, matchScore, reason }) => ({
+      username,
+      matchScore,
+      reason
+    }));
   }
 };

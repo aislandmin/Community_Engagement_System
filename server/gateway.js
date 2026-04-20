@@ -172,8 +172,8 @@ import cookieParser from 'cookie-parser';
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(
     cors({
@@ -201,7 +201,7 @@ const gateway = new ApolloGateway({
             willSendRequest({ request, context }) {
                 const cookieHeader = context.req?.headers?.cookie;
 
-                console.log(`➡️ [${name}] incoming cookie from browser:`, cookieHeader || '(none)');
+                console.log(` [${name}] incoming cookie from browser:`, cookieHeader || '(none)');
 
                 if (cookieHeader) {
                     request.http.headers.set('cookie', cookieHeader);
@@ -215,7 +215,7 @@ const gateway = new ApolloGateway({
 
                 if (setCookie && context.res) {
                     context.res.setHeader('set-cookie', setCookie);
-                    console.log(`✅ [${name}] forwarded set-cookie to browser`);
+                    console.log(` [${name}] forwarded set-cookie to browser`);
                 }
 
                 return response;
@@ -240,7 +240,7 @@ async function startServer() {
     );
 
     app.listen(4000, () => {
-        console.log('🚀 API Gateway ready at http://localhost:4000/graphql');
+        console.log('API Gateway ready at http://localhost:4000/graphql');
     });
 }
 

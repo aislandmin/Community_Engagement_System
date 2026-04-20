@@ -43,6 +43,44 @@ const helpRequestSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
+// --- Business Schema for BusinessEvent DB ---
+const businessSchema = new mongoose.Schema({
+  ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  name: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  images: [{ type: String }],
+  location: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// --- Deal Schema for BusinessEvent DB ---
+const dealSchema = new mongoose.Schema({
+  businessId: { type: mongoose.Schema.Types.ObjectId, ref: 'Business', required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  discount: { type: String },
+  validUntil: { type: Date },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// --- Event Schema for BusinessEvent DB ---
+const eventSchema = new mongoose.Schema({
+  organizerId: { type: mongoose.Schema.Types.ObjectId, required: true },
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  date: { type: Date, required: true },
+  location: { type: String, required: true },
+  rsvps: [{ type: mongoose.Schema.Types.ObjectId }],
+  volunteersNeeded: { type: Number, default: 0 },
+  volunteerInterests: [{ type: String }],
+  timingInsight: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 async function seedData() {
   try {
     // 1. Connect to Auth DB and seed users
@@ -104,12 +142,20 @@ async function seedData() {
         role: 'resident',
         interests: ['tech', 'gaming', 'computers'],
         location: 'North York'
+      },
+      { 
+        username: 'david', 
+        email: 'david@example.com', 
+        password: hashedPassword, 
+        role: 'business_owner',
+        interests: ['mechanic', 'cars', 'tools'],
+        location: '123 Garage Rd'
       }
     ]);
     const johnId = users[0]._id;
     const janeId = users[1]._id;
     const xiaominId = users[2]._id;
-    const aliceId = users[3]._id;
+    const davidId = users[6]._id;
 
     console.log(`Seeded ${users.length} users`);
     await authConn.close();
@@ -172,8 +218,84 @@ async function seedData() {
       }
     ]);
     console.log('Seeded help requests');
-
     await commConn.close();
+
+    // 3. Connect to Business Event DB and seed businesses, deals, and events
+    const beConn = await mongoose.createConnection(BUSINESS_EVENT_MONGO_URI).asPromise();
+    console.log('Connected to Business Event Database');
+    const Business = beConn.model('Business', businessSchema);
+    const Deal = beConn.model('Deal', dealSchema);
+    const Event = beConn.model('Event', eventSchema);
+
+    // Clear existing data
+    await Business.deleteMany({});
+    await Deal.deleteMany({});
+    await Event.deleteMany({});
+    console.log('Cleared existing business and event data');
+
+    // Seed Business for David
+    const davidBusiness = await Business.create({
+      ownerId: davidId,
+      name: 'David\'s Auto Workshop',
+      description: 'The best car repair service in town.',
+      category: 'Automotive',
+      location: '123 Garage Rd'
+    });
+    console.log('Seeded David\'s business');
+
+    // Seed 3 Deals for David's Business
+    await Deal.insertMany([
+      {
+        businessId: davidBusiness._id,
+        title: 'Spring Oil Change',
+        description: 'Get your car ready for spring with a fresh oil change.',
+        discount: '20%',
+        validUntil: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
+      },
+      {
+        businessId: davidBusiness._id,
+        title: 'Tire Rotation',
+        description: 'Free tire rotation with any major service.',
+        discount: 'Free',
+        validUntil: new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000)
+      },
+      {
+        businessId: davidBusiness._id,
+        title: 'Brake Check',
+        description: 'Complimentary brake inspection for new customers.',
+        discount: '100% off Inspection',
+        validUntil: new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000)
+      }
+    ]);
+    console.log('Seeded 3 deals for David\'s business');
+
+    // Seed 2 Events for Community Owner (jane)
+    await Event.insertMany([
+      {
+        organizerId: janeId,
+        title: 'Community Town Hall',
+        description: 'Discuss upcoming community projects and security improvements.',
+        category: 'Meetings',
+        date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000),
+        location: 'Community Center',
+        volunteersNeeded: 2,
+        volunteerInterests: ['organization', 'public speaking']
+      },
+      {
+        organizerId: janeId,
+        title: 'Local Food Festival',
+        description: 'Celebrate local flavors with music and fun activities.',
+        category: 'Social',
+        date: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
+        location: 'Main St Square',
+        volunteersNeeded: 5,
+        volunteerInterests: ['cooking', 'hospitality', 'security']
+      }
+    ]);
+    console.log('Seeded 2 events for Community Organizer (Jane)');
+
+    await beConn.close();
+
     console.log('Seeding completed successfully!');
     process.exit(0);
 

@@ -36,7 +36,7 @@ const server = new ApolloServer({
 
 async function startServer() {
     await server.start();
-    
+
     app.use('/graphql', expressMiddleware(server, {
         context: async ({ req, res }) => {
             const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
@@ -46,14 +46,14 @@ async function startServer() {
                     const decoded = jwt.verify(token, config.JWT_SECRET);
                     user = { id: decoded.id, username: decoded.username };
                 } catch (error) {
-                    console.error("🚨 Token verification failed in AI Service:", error.message);
+                    console.error("Token verification failed in AI Service:", error.message);
                 }
             }
             return { user, req, res };
         }
     }));
 
-    app.listen(config.port, () => console.log(`🚀 AI Personalization Service running at http://localhost:${config.port}/graphql`));
+    app.listen(config.port, () => console.log(`AI Personalization Service running at http://localhost:${config.port}/graphql`));
 }
 
 startServer();

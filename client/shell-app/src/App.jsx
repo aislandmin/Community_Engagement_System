@@ -74,7 +74,7 @@ function App() {
         ) : (
           <>
             <nav className="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm py-3">
-              <Container className="px-4">
+              <Container fluid className="px-4">
                 <span className="navbar-brand fw-bold fs-3 d-flex align-items-center mb-0">
                   Community Engagement System
                 </span>

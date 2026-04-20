@@ -79,7 +79,7 @@ const typeDefs = `#graphql
     updateHelpRequest(id: ID!, description: String, location: String, isResolved: Boolean): HelpRequest
     volunteerForHelpRequest(id: ID!): HelpRequest
     resolveHelpRequest(id: ID!): HelpRequest
-    inviteVolunteer(helpRequestId: ID!, volunteerId: ID!): HelpRequest
+    inviteVolunteer(helpRequestId: ID, eventId: ID, volunteerId: ID!): HelpRequest
 
     createAlert(title: String!, description: String!, category: String!, location: String): Alert
     resolveAlert(id: ID!): Alert
