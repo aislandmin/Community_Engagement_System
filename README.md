@@ -29,7 +29,7 @@ The backend uses **Apollo Federation 2.0** to unify specialized subgraphs.
 | **Auth Service** | 4001 | Roles (Resident/Owner/Organizer), Interests, & JWT Auth. |
 | **Community Service** | 4003 | News, Help Requests, & Real-time Alerts. |
 | **Business & Event Service** | 4004 | Listings, Deals, Events, & Real-time Review Sync. |
-| **AI Personalization Service** | 4005 | Centralized Gemini 1.0 Pro logic & Hybrid Matching. |
+| **AI Personalization Service** | 4005 | Centralized `gemini-flash-latest` logic & Hybrid Matching. |
 
 ### Frontend (Micro-frontends)
 Built using **React** and **Vite Module Federation**.
