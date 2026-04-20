@@ -10,19 +10,10 @@ if (!geminiKey) {
 }
 
 const model = new ChatGoogleGenerativeAI({
-  // model: "gemini-1.0-pro",
-  // maxOutputTokens: 2048,
-  // apiKey: apiKey,
   apiKey: geminiKey,
-  model: "gemini-flash-latest",//"gemini-1.5-flash",
+  model: "gemini-flash-latest",
   temperature: 0.7,
 });
-
-// chatModel = new ChatGoogleGenerativeAI({
-//   apiKey: geminiKey,
-//   model: "gemini-flash-latest",//"gemini-1.5-flash",
-//   temperature: 0.7,
-// });
 
 export const summarizeText = async (text) => {
   const prompt = PromptTemplate.fromTemplate(

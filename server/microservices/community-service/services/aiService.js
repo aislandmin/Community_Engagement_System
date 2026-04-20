@@ -15,7 +15,7 @@ const getChatModel = () => {
     }
     chatModel = new ChatGoogleGenerativeAI({
       apiKey: geminiKey,
-      model: "gemini-flash-latest",//"gemini-1.5-flash",
+      model: "gemini-flash-latest",
       temperature: 0.7,
     });
   }
