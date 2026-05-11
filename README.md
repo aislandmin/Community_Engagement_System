@@ -1,6 +1,6 @@
 # Community Engagement System
 
-An AI-powered, role-based community platform for residents, business owners, and community organizers. The project demonstrates a modern full-stack architecture with federated GraphQL microservices, React micro-frontends, real-time Socket.io notifications, MongoDB persistence, and Google Gemini AI integrations.
+An AI-powered, role-based community platform for residents, business owners, and community organizers. The project demonstrates a modern full-stack architecture with federated GraphQL **microservices**, React **micro-frontends**, real-time Socket.io notifications, MongoDB persistence, and **Google Gemini AI** integrations.
 
 ## Why This Project Matters
 
@@ -11,6 +11,14 @@ Community platforms often split conversations, local help, events, and business 
 - Community organizers can create events, request volunteers, and use AI-assisted volunteer matching.
 
 The implementation focuses on production-style concerns: service boundaries, role-aware UI, federated API composition, real-time updates, seed data, and practical AI features.
+
+## AI Features
+
+- Post summarization for community feed content (News/Discussion). 
+- Review sentiment analysis with actionable business-owner feedback.
+- Event timing prediction with concise one-line recommendations.
+- Volunteer matching using profile interests, location, and task/event context.
+- Community AI assistant with retrieved discussion context and suggested follow-up questions.
 
 ## Core Features
 
@@ -73,14 +81,6 @@ The implementation focuses on production-style concerns: service boundaries, rol
 | Community Service | `4003` | Posts, comments, help requests, emergency alerts |
 | Business/Event Service | `4004` | Businesses, deals, reviews, events, RSVP/volunteer actions |
 | AI Personalization Service | `4005` | AI summaries, sentiment, timing prediction, volunteer matching, chatbot |
-
-## AI Features
-
-- Post summarization for community feed content (News/Discussion). 
-- Review sentiment analysis with actionable business-owner feedback.
-- Event timing prediction with concise one-line recommendations.
-- Volunteer matching using profile interests, location, and task/event context.
-- Community AI assistant with retrieved discussion context and suggested follow-up questions.
 
 ## Tech Stack
 
@@ -226,31 +226,39 @@ All accounts use the same password for testing: **`password123`**
 
 ### 1. Resident Experience - Feeds & AI Summaries
 Discussion and news feeds with AI-generated insights for residents.
+
 ![Resident Feeds](screenshots/screenshot1-resident-feeds.png)
 
 ### 2. Business Owner Dashboard - AI Insights
 AI-powered customer sentiment analysis and business performance insights.
+
 ![Business Owner Insights](screenshots/screenshot2-business-owner.png)
 
 ### 3. Event Management - AI Timing Prediction
 Community organizers receive AI-suggested timing recommendations for new events.
+
 ![AI Timing Prediction](screenshots/screenshot3-community-organizer.png)
 
 ### 4. AI Volunteer Matching
 Real-time AI matching of residents to help requests and community events based on skills and interests.
+
 ![AI Volunteer Matching](screenshots/screenshot4-event-AI-volunteermatching.png)
 
 ### 5. Volunteer Invitations
 Residents receive real-time notifications when they are matched for a community task.
+
 ![Volunteer Invitation](screenshots/screenshot5-event-AI-volunteer-invite.png)
 
 ### 6. AI Community Assistant
 A personalized AI assistant that answers questions about community happenings using live context.
+
 ![AI Assistant](screenshots/screenshot6-resident-AI-assistant.png)
 
 ### 7. Real-Time Emergency Alerts
 Safety alerts broadcast instantly to all active residents in the neighborhood.
+
 ![Emergency Alert](screenshots/screenshot7-emergency-alert.png)
+
 ---
 
 Built as a full-stack portfolio project to demonstrate microservices, micro-frontends, GraphQL federation, real-time collaboration, and AI-enhanced community workflows.
