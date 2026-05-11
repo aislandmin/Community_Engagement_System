@@ -1,9 +1,16 @@
-import { summarizeText, analyzeSentiment, predictTiming, suggestVolunteers } from '../services/aiService.js';
+import { summarizeText, analyzeSentiment, analyzeReviewSentiment, predictTiming, suggestVolunteers, communityAIQuery } from '../services/aiService.js';
 import User from '../models/User.js';
 import HelpRequest from '../models/HelpRequest.js';
 import Event from '../models/Event.js';
 
 const resolvers = {
+  Post: {
+    author: (post) => ({ id: post.author }),
+    comments: (post) => post.comments || [],
+  },
+  Comment: {
+    author: (comment) => ({ id: comment.authorId }),
+  },
   Query: {
     summarize: async (_, { text }) => {
       const summary = await summarizeText(text);
@@ -21,6 +28,10 @@ const resolvers = {
     },
     predictEventTiming: async (_, { eventDescription }) => {
       return await predictTiming(eventDescription);
+    },
+    communityAIQuery: async (_, { query }, context) => {
+      if (!context.user) throw new Error('Unauthorized');
+      return await communityAIQuery(query, context.user.id);
     },
     suggestVolunteers: async (_, { eventId, helpRequestId }) => {
       let requirements = "General community help request.";

@@ -2,6 +2,7 @@ import Business from '../models/Business.js';
 import Deal from '../models/Deal.js';
 import Review from '../models/Review.js';
 import Event from '../models/Event.js';
+import { analyzeReviewSentiment, predictTiming } from '../services/aiService.js';
 
 const resolvers = {
   Business: {
@@ -77,25 +78,12 @@ const resolvers = {
     createReview: async (_, args, context) => {
       if (!context.user) throw new Error('Unauthorized');
       
-      const comment = args.comment.toLowerCase();
-      let sentimentScore = 0;
-      let businessFeedback = "Keep monitoring your reviews!";
-
-      if (comment.includes('great') || comment.includes('excellent') || comment.includes('love')) {
-        sentimentScore = 0.8;
-        businessFeedback = args.dealId ? "The deal you posted is attracting very positive feedback!" : "Your customers love your service! Keep doing what you're doing.";
-      } else if (comment.includes('bad') || comment.includes('poor') || comment.includes('horrible') || comment.includes('slow')) {
-        sentimentScore = -0.7;
-        businessFeedback = args.dealId ? "Customers are unhappy with the recent deal. Consider adjusting the offer." : "Customers are unhappy. Consider improving speed or service quality.";
-      } else if (comment.includes('okay') || comment.includes('good')) {
-        sentimentScore = 0.2;
-        businessFeedback = "Solid performance, but there is room for improvement.";
-      }
+      const { score, label, businessFeedback } = await analyzeReviewSentiment(args.comment);
 
       const newReview = new Review({
         ...args,
         authorId: context.user.id,
-        sentimentScore,
+        sentimentScore: score,
         businessFeedback,
         dealId: args.dealId
       });
@@ -125,16 +113,7 @@ const resolvers = {
     createEvent: async (_, args, context) => {
       if (!context.user) throw new Error('Unauthorized');
       
-      // Simulate AI timing prediction
-      const desc = args.description.toLowerCase();
-      let timingInsight = "Saturday afternoon at 2 PM is usually best for community events.";
-      if (desc.includes('clean') || desc.includes('garden')) {
-        timingInsight = "Saturday morning at 9 AM is optimal for outdoor physical activities.";
-      } else if (desc.includes('meetup') || desc.includes('social')) {
-        timingInsight = "Friday evening at 6 PM typically sees the highest social engagement.";
-      } else if (desc.includes('workshop') || desc.includes('class')) {
-        timingInsight = "Thursday evening at 7 PM is best for educational workshops.";
-      }
+      const timingInsight = await predictTiming(args.description);
 
       const newEvent = new Event({
         ...args,

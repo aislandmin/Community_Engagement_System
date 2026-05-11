@@ -1,20 +1,7 @@
 import Post from '../models/Post.js';
 import HelpRequest from '../models/HelpRequest.js';
 import Alert from '../models/Alert.js';
-import { communityAIQuery as aiQueryService } from '../services/aiService.js';
-
-// Simple "AI" simulation logic
-const generateAISummary = (content) => {
-  const words = content.split(/\s+/);
-  const brief = words.slice(0, 20).join(' ');
-  const suffix = words.length > 20 ? '...' : '';
-
-  // Simulated AI "insights"
-  const sentiments = ['positive', 'informative', 'community-focused', 'urgent'];
-  const sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
-
-  return `This post appears to be ${sentiment}. Key takeaway: "${brief}${suffix}"`;
-};
+import { summarizeText } from '../services/aiService.js';
 
 const resolvers = {
   Post: {
@@ -44,16 +31,12 @@ const resolvers = {
         const filter = category ? { category } : {};
         return await Alert.find(filter).sort({ createdAt: -1 });
     },
-    communityAIQuery: async (_, { query }, context) => {
-      if (!context.user) throw new Error('Unauthorized');
-      return await aiQueryService(query, context.user.id);
-    },
   },
   Mutation: {
     createPost: async (_, { title, content, category }, context) => {
       if (!context.user) throw new Error('Unauthorized');
 
-      const aiSummary = generateAISummary(content);
+      const aiSummary = await summarizeText(content);
 
       const newPost = new Post({
         title,

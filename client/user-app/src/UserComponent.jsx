@@ -26,10 +26,11 @@ function UserComponent() {
     const [activeTab, setActiveTab] = useState('login');
     const [authError, setAuthError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const [login] = useMutation(LOGIN_MUTATION, {
         onCompleted: () => {
-            console.log("✅ Login successful, reloading page...");
+            console.log("Login successful, reloading page...");
             window.dispatchEvent(new CustomEvent('loginSuccess', { detail: { isLoggedIn: true } }));
         },
         onError: (error) => setAuthError(error.message || 'Login failed'),
@@ -79,9 +80,9 @@ function UserComponent() {
 
     return (
         <Container className="d-flex align-items-center justify-content-center" style={{ minHeight: '100vh' }}>
-            <div style={{ width: '100%', maxWidth: '450px' }}>
+            <div style={{ width: '100%', maxWidth: '560px' }}>
                 <div className="text-center mb-4">
-                    <h2 className="fw-bold text-primary">Community Hub</h2>
+                    <h2 className="fw-bold text-primary text-nowrap fs-2">Community Engagement System</h2>
                     <p className="text-muted">Connect, Engage, and Grow together.</p>
                 </div>
 
@@ -94,7 +95,7 @@ function UserComponent() {
                         </Nav.Item>
                         <Nav.Item>
                             <Nav.Link eventKey="signup" className={`border-0 py-3 ${activeTab === 'signup' ? 'bg-white fw-bold border-bottom-0' : 'text-muted'}`}>
-                                Sign Up
+                                Signup
                             </Nav.Link>
                         </Nav.Item>
                     </Nav>
@@ -125,12 +126,34 @@ function UserComponent() {
 
                             <Form.Group className="mb-3">
                                 <Form.Label className="small fw-semibold text-uppercase text-muted">Password</Form.Label>
-                                <Form.Control
-                                    type="password"
-                                    placeholder="Enter your password"
-                                    className="py-2 border-light bg-light bg-opacity-50"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)} />
+                                <div className="position-relative">
+                                    <Form.Control
+                                        type={showPassword ? 'text' : 'password'}
+                                        placeholder="Enter your password"
+                                        className="py-2 pe-5 border-light bg-light bg-opacity-50"
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)} />
+                                    <button
+                                        type="button"
+                                        className="btn btn-link position-absolute top-50 end-0 translate-middle-y text-muted px-3"
+                                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                        onClick={() => setShowPassword(prev => !prev)}
+                                    >
+                                        {showPassword ? (
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                                                <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                                                <path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                                                <line x1="2" y1="2" x2="22" y2="22" />
+                                            </svg>
+                                        ) : (
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                                <circle cx="12" cy="12" r="3" />
+                                            </svg>
+                                        )}
+                                    </button>
+                                </div>
                             </Form.Group>
 
                             {activeTab === 'signup' && (
@@ -145,7 +168,7 @@ function UserComponent() {
                                     </Form.Group>
 
                                     <Form.Group className="mb-3">
-                                        <Form.Label className="small fw-semibold text-uppercase text-muted">Your Neighborhood</Form.Label>
+                                        <Form.Label className="small fw-semibold text-uppercase text-muted">Your Location</Form.Label>
                                         <Form.Control
                                             type="text"
                                             placeholder="e.g. Oak Avenue"

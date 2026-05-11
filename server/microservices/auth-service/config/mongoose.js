@@ -10,9 +10,9 @@ const connectDB = async () => {
 
         await mongoose.connect(config.db);
 
-        console.log(`✅ Auth Service connected to MongoDB at ${config.db}`);
+        console.log(`Auth Service connected to MongoDB at ${config.db}`);
     } catch (error) {
-        console.error('❌ Error connecting to MongoDB (Auth Service):', error.message);
+        console.error('Error connecting to MongoDB (Auth Service):', error.message);
         process.exit(1);
     }
 };

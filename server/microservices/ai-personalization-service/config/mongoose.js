@@ -14,9 +14,9 @@ const connectDB = async () => {
             communityConnection.asPromise(),
             businessConnection.asPromise()
         ]);
-        console.log(`✅ AI Service connected to Auth, Community & Business DBs`);
+        console.log(`AI Service connected to Auth, Community & Business DBs`);
     } catch (error) {
-        console.error('❌ MongoDB connection error in AI Service:', error.message);
+        console.error('MongoDB connection error in AI Service:', error.message);
         process.exit(1);
     }
 };

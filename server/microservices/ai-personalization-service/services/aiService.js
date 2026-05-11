@@ -1,5 +1,9 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { PromptTemplate } from "@langchain/core/prompts";
+import { TextLoader } from "@langchain/classic/document_loaders/fs/text";
+import { Blob } from "node:buffer";
+import Post from "../models/Post.js";
+import Interaction from "../models/Interaction.js";
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -60,11 +64,15 @@ export const analyzeReviewSentiment = async (comment) => {
 
 export const predictTiming = async (description) => {
   const prompt = PromptTemplate.fromTemplate(
-    "Based on the following event description, suggest the best day of the week and time of day to hold this event for maximum community engagement in a typical residential neighborhood. Event: {description}"
+    "Suggest only the best event timing for maximum community engagement. Return one short line only. Do not explain, do not list reasons, do not use markdown. Format: Day, Month Date, Year at Time. Event: {description}"
   );
   const chain = prompt.pipe(model);
   const response = await chain.invoke({ description });
-  return response.content;
+  return response.content
+    .replace(/[*#`]/g, '')
+    .split(/\r?\n/)
+    .map(line => line.trim())
+    .filter(Boolean)[0] || 'Saturday at 2:00 PM';
 };
 
 export const suggestVolunteers = async (users, requirements) => {
@@ -147,13 +155,6 @@ export const suggestVolunteers = async (users, requirements) => {
     .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, 5);
 
-  console.log('--- Hybrid Matching Debug ---');
-  console.log('Event Title:', title);
-  console.log('Category:', category);
-  console.log('Location:', location);
-  console.log('Keywords:', [...eventKeywords]);
-  console.log('Top Matches:', JSON.stringify(topMatches, null, 2));
-
   if (topMatches.length === 0) {
     return [];
   }
@@ -194,8 +195,6 @@ Matches:
         ? response.content
         : JSON.stringify(response.content);
 
-    console.log('Raw AI response:', rawContent);
-
     const cleanedContent = rawContent.replace(/```json|```/g, '').trim();
     const aiReasons = JSON.parse(cleanedContent);
 
@@ -214,5 +213,93 @@ Matches:
       matchScore,
       reason
     }));
+  }
+};
+
+/**
+ * AI Service for community agent - Centralized in AI Service
+ */
+export const communityAIQuery = async (userQuery, userId) => {
+  try {
+    // 1. Fetch only community discussions
+    const posts = await Post.find({ category: 'discussion' }).sort({ createdAt: -1 }).limit(50);
+
+    // 2. Prepare content for TextLoader
+    const content = posts.map(post =>
+      `ID: ${post._id} | Title: ${post.title} | Content: ${post.content}`
+    ).join("\n---\n");
+
+    const loader = new TextLoader(new Blob([content], { type: "text/plain" }));
+    const docs = await loader.load();
+    const knowledgeBase = docs[0].pageContent;
+
+    // 3. Fetch past interactions
+    const pastInteractions = await Interaction.find({ userId })
+      .sort({ timestamp: -1 })
+      .limit(2);
+
+    const contextHistory = pastInteractions.map(i =>
+      `User: ${i.userInput}\nAI: ${i.aiResponse}`
+    ).join("\n");
+
+    // 4. Build Prompt
+    const promptText = `
+      You are a helpful Community Engagement Assistant.
+      
+      Knowledge Base (Discussions):
+      ${knowledgeBase}
+      
+      History:
+      ${contextHistory}
+      
+      User Query: "${userQuery}"
+      
+      Instructions:
+      - Use a context-aware heading mirroring the user's terms (e.g. "Main Discussion Topics"). Include an emoji.
+      - Use bullet points (- ) to summarize key points.
+      - PLAIN TEXT ONLY. NO MARKDOWN (** or #).
+      - Provide 3 suggested questions.
+      - Include EXACT post IDs in "retrievedPostIds".
+      
+      Respond in JSON:
+      {
+        "text": "Heading\n- point 1\n- point 2",
+        "suggestedQuestions": ["Q1?", "Q2?", "Q3?"],
+        "retrievedPostIds": ["id1", "id2"]
+      }
+    `;
+
+    // 5. Invoke Model
+    const response = await model.invoke(promptText);
+
+    // 6. Parse and Save
+    let aiResult;
+    try {
+      const cleanResponse = response.content.replace(/```json/g, "").replace(/```/g, "").trim();
+      aiResult = JSON.parse(cleanResponse);
+    } catch (e) {
+      aiResult = { text: response.content, suggestedQuestions: [], retrievedPostIds: [] };
+    }
+
+    await new Interaction({ userId, userInput: userQuery, aiResponse: aiResult.text }).save();
+
+    // 7. Map relevant posts
+    const relevantPosts = aiResult.retrievedPostIds?.length > 0
+      ? posts.filter(p => aiResult.retrievedPostIds.includes(p._id.toString())).slice(0, 3)
+      : [];
+
+    return {
+      text: aiResult.text,
+      suggestedQuestions: aiResult.suggestedQuestions.slice(0, 3),
+      retrievedPosts: relevantPosts
+    };
+
+  } catch (error) {
+    console.error("Centralized AI Service Error:", error);
+    return {
+        text: "Community Activity Update\nI'm currently having trouble processing the discussions.",
+        suggestedQuestions: ["What are the latest safety concerns?", "Are there any coffee shop recommendations?"],
+        retrievedPosts: []
+    };
   }
 };

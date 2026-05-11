@@ -31,7 +31,7 @@ const io = new SocketServer(httpServer, {
 });
 
 io.on('connection', (socket) => {
-    console.log('⚡ User connected for business updates:', socket.id);
+    console.log('User connected for business updates:', socket.id);
 });
 
 app.use(cors({
@@ -61,14 +61,14 @@ async function startServer() {
                     const decoded = jwt.verify(token, config.JWT_SECRET);
                     user = { id: decoded.id, username: decoded.username };
                 } catch (error) {
-                    console.error("🚨 Token verification failed in Business Service:", error);
+                    console.error("Token verification failed in Business Service:", error);
                 }
             }
             return { user, req, res, io };
         }
     }));
 
-    httpServer.listen(config.port, () => console.log(`🚀 Business & Event Service (Real-time enabled) running at http://localhost:${config.port}/graphql`));
+    httpServer.listen(config.port, () => console.log(`Business & Event Service (Real-time enabled) running at http://localhost:${config.port}/graphql`));
 }
 
 startServer();

@@ -29,7 +29,7 @@ function AIChatbot() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      text: '🤖 Hello! I am your Community AI Agent. Ask me anything about your neighborhood discussions. How can I help you today?',
+      text: 'Hello! I am your Community AI Agent. Ask me anything about your neighborhood discussions. How can I help you today?',
       suggestedQuestions: ['What are people discussing about safety?', 'Are there any updates on neighborhood projects?', 'What are the main topics being discussed lately?']
     }
   ]);
@@ -167,7 +167,7 @@ function AIChatbot() {
             style={{ width: '45px', height: '45px' }}
             disabled={loading || !input.trim()}
           >
-            <span className="fs-5">⬆️</span>
+            <span>Send</span>
           </Button>
         </Form>
       </div>

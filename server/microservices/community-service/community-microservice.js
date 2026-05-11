@@ -32,12 +32,12 @@ const io = new SocketServer(httpServer, {
 });
 
 io.on('connection', (socket) => {
-    console.log('⚡ User connected for community alerts:', socket.id);
+    console.log('User connected for community alerts:', socket.id);
     socket.on('join-neighborhood', (neighborhood) => {
         socket.join(neighborhood);
     });
     socket.on('disconnect', () => {
-        console.log('❌ User disconnected from alerts');
+        console.log('User disconnected from alerts');
     });
 });
 
@@ -74,7 +74,7 @@ async function startServer() {
         }
     }));
 
-    httpServer.listen(config.port, () => console.log(`🚀 Community Microservice (with Real-time) running at http://localhost:${config.port}/graphql`));
+    httpServer.listen(config.port, () => console.log(`Community Microservice (with Real-time) running at http://localhost:${config.port}/graphql`));
 }
 
 startServer();

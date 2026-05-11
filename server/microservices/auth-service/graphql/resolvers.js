@@ -9,7 +9,7 @@
 //     //
 //     Query: {
 //         currentUser: async (_, __, context) => {
-//             console.log("🔍 Debugging context:", context);  // Debugging
+//             console.log("Debugging context:", context);  // Debugging
 //             const { req } = context;
 
 //             if (!req || !req.cookies) {  // Ensure `req` exists
@@ -24,7 +24,6 @@
 //             }
 
 //             try {
-//                 console.log("JWT_SECRET in resolvers.js:", config.JWT_SECRET);
 //                 const decoded = jwt.verify(token, config.JWT_SECRET);
 //                 const user = await User.findOne({ username: decoded.username });
 //                 if (!user) return null;
@@ -65,7 +64,7 @@
 //                 //sameSite: 'None', // Use 'None' if different origins
 //                 maxAge: 24 * 60 * 60 * 1000, // 1 day
 //             });
-//             console.log("✅ Cookie set in response:", res.getHeaders()['set-cookie']);
+//             console.log("Cookie set in response:", res.getHeaders()['set-cookie']);
 
 //             return true;
 //         },
@@ -103,43 +102,41 @@ const resolvers = {
     },
     Query: {
         currentUser: async (_, __, context) => {
-            console.log('🔍 Debugging context:', context);
+            console.log('Debugging context:', context);
 
             const { req } = context;
 
             if (!req) {
-                console.log('❌ Request object is missing!');
+                console.log('Request object is missing!');
                 return null;
             }
 
             if (!req.cookies) {
-                console.log('❌ req.cookies is missing!');
+                console.log('req.cookies is missing!');
                 return null;
             }
 
-            console.log('🔍 Auth Microservice: Checking request cookies:', req.cookies);
+            console.log('Auth Microservice: Checking request cookies:', req.cookies);
 
             const token = req.cookies.token;
             if (!token) {
-                console.log('❌ Request req.cookies.token: null!');
+                console.log('Request req.cookies.token: null!');
                 return null;
             }
 
             try {
-                console.log('JWT_SECRET in resolvers.js:', config.JWT_SECRET);
-
                 const decoded = jwt.verify(token, config.JWT_SECRET);
-                console.log('✅ Decoded token:', decoded);
+                console.log('Decoded token:', decoded);
 
                 const user = await User.findById(decoded.id);
                 if (!user) {
-                    console.log('❌ User not found!');
+                    console.log('User not found!');
                     return null;
                 }
 
                 return user;
             } catch (error) {
-                console.error('❌ Error verifying token:', error);
+                console.error('Error verifying token:', error);
                 return null;
             }
         },
@@ -170,7 +167,7 @@ const resolvers = {
                 maxAge: 24 * 60 * 60 * 1000,
             });
 
-            console.log('✅ Cookie set in auth-service response:', res.getHeaders()['set-cookie']);
+            console.log('Cookie set in auth-service response:', res.getHeaders()['set-cookie']);
 
             return true;
         },

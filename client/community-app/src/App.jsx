@@ -2,9 +2,9 @@ import React from 'react';
 import CommunityComponent from './CommunityComponent';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-function App() {
+function App(props) {
   return (
-    <CommunityComponent />
+    <CommunityComponent {...props} />
   );
 }
 

@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 dotenv.config({ path: './.env' });
 
-import { parse } from 'graphql';  // Import GraphQL parser
+import { parse } from 'graphql'; // Import GraphQL parser
 import { config } from './config/config.js';
 import express from 'express';
 import { ApolloServer } from '@apollo/server';
@@ -18,7 +18,6 @@ import User from './models/User.js';
 import typeDefs from './graphql/typeDefs.js';
 import resolvers from './graphql/resolvers.js';
 //
-console.log("🔍 JWT_SECRET in service:", process.env.JWT_SECRET);
 // Connect to MongoDB
 connectDB();
 
@@ -31,7 +30,7 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// ✅ Fix: Parse `typeDefs` before passing it to `buildSubgraphSchema`
+// Fix: Parse `typeDefs` before passing it to `buildSubgraphSchema`
 const schema = buildSubgraphSchema([{ typeDefs: parse(typeDefs), resolvers }]);
 // 
 const server = new ApolloServer({
@@ -44,7 +43,7 @@ async function startServer() {
     // 
     app.use('/graphql', expressMiddleware(server, {
         context: async ({ req, res }) => {
-            console.log("🔍 Auth Microservice: Checking request cookies:", req.cookies);
+            console.log("Auth Microservice: Checking request cookies:", req.cookies);
             // Check for token in cookies or headers
             const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
             let user = null;
@@ -55,10 +54,10 @@ async function startServer() {
                     const dbUser = await User.findOne({ username: decoded.username });
                     if (dbUser) {
                         user = { id: dbUser._id.toString(), username: dbUser.username };
-                        console.log("✅ Authenticated User:", user);
+                        console.log("Authenticated User:", user);
                     }
                 } catch (error) {
-                    console.error("🚨 Token verification failed:", error);
+                    console.error("Token verification failed:", error);
                 }
             }
             // Return context
@@ -68,7 +67,7 @@ async function startServer() {
 
     //
     //
-    app.listen(config.port, () => console.log(`🚀 Auth Microservice running at http://localhost:${config.port}/graphql`));
+    app.listen(config.port, () => console.log(`Auth Microservice running at http://localhost:${config.port}/graphql`));
 }
 //
 startServer();

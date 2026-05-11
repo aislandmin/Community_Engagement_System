@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { communityConnection } from '../config/mongoose.js';
 
 const interactionSchema = new mongoose.Schema({
   userId: {
@@ -20,6 +21,4 @@ const interactionSchema = new mongoose.Schema({
   },
 });
 
-const Interaction = mongoose.model('Interaction', interactionSchema);
-
-export default Interaction;
+export default communityConnection.model('Interaction', interactionSchema);

@@ -1,7 +1,7 @@
 const typeDefs = `#graphql
   extend schema
     @link(url: "https://specs.apollo.dev/federation/v2.0",
-          import: ["@key"])
+          import: ["@key", "@shareable"])
 
   enum PostCategory {
     news
@@ -12,7 +12,7 @@ const typeDefs = `#graphql
     id: ID!
   }
 
-  type Comment {
+  type Comment @shareable {
     id: ID!
     author: User
     username: String
@@ -20,7 +20,7 @@ const typeDefs = `#graphql
     createdAt: String
   }
 
-  type Post {
+  type Post @key(fields: "id") @shareable {
     id: ID!
     author: User
     title: String!
@@ -55,19 +55,12 @@ const typeDefs = `#graphql
     createdAt: String
   }
 
-  type AIResponse {
-    text: String!
-    suggestedQuestions: [String]!
-    retrievedPosts: [Post]!
-  }
-
   type Query {
     posts(category: PostCategory): [Post]
     helpRequests: [HelpRequest]
     post(id: ID!): Post
     helpRequest(id: ID!): HelpRequest
     alerts(category: String): [Alert]
-    communityAIQuery(query: String!): AIResponse!
   }
 
   type Mutation {
